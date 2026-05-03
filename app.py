@@ -10,8 +10,9 @@ VERIFY_TOKEN    = "marsbotverify2026"
 PHONE_NUMBER_ID = "1074786032384447"
 WA_TOKEN        = os.environ.get("WA_TOKEN", "EAAV06dZAG84MBRUXgUGXok4WC0JpnEUwHLkiENthiYwFgKqJXZAtNK3dbh2XsTLCuaZBWrDppPwqCGVdSOKSY89UvgfpSA2nTTjNdeZAcGjez1BJ0LZBOPdxNLytGJHFmErfEBnSapP8ZAFnZB4Cg2NN7gx9EJDpDGiPOFVkv4y3ejDCXZCas5FH2T0sbbiQBVZA64fR6ImgMefczZA8koLZCjoniuR2PZALH0hKXOlbgzpUhUakWWYkh9hwkAZDZD")
 ANTHROPIC_KEY   = os.environ.get("ANTHROPIC_KEY", "")
-SEND_URL = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
-HEADERS  = {"Authorization": f"Bearer {WA_TOKEN}", "Content-Type": "application/json"}
+PORT            = int(os.environ.get("PORT", 10000))
+SEND_URL        = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
+HEADERS         = {"Authorization": f"Bearer {WA_TOKEN}", "Content-Type": "application/json"}
 
 sessions = {}
 
@@ -29,8 +30,8 @@ STAFF = [
 INFO = {
     "direccion":      "Calle Señoritas Villa esq. José Horacio Rodríguez, La Vega, República Dominicana",
     "horario":        "Lun–Vie: 8:00 AM – 7:00 PM | Sábado: 8:00 AM – 6:00 PM | Domingo: Cerrado",
-    "envios":         "Realizamos envíos a todo el territorio nacional de República Dominicana 🚚. El costo y tiempo de entrega se coordinan según tu provincia.",
-    "financiamiento": "Ofrecemos financiamiento hasta *18 meses* en cuotas mensuales, sin prima en productos seleccionados. Solo necesitas cédula y comprobante de ingresos.",
+    "envios":         "Realizamos envíos a todo el territorio nacional de República Dominicana. El costo y tiempo se coordinan según tu provincia.",
+    "financiamiento": "Financiamiento hasta *18 meses* en cuotas mensuales, sin prima en productos seleccionados. Solo necesitas cédula y comprobante de ingresos.",
 }
 
 CATEGORIAS = {
@@ -48,20 +49,20 @@ CATEGORIAS = {
 }
 
 FAQ = [
-    {"keys": ["garantía","garantia","defecto","daño"],"resp": "🛡️ *Garantía:*\n• Electrodomésticos: 1–2 años según marca\n• Muebles: 6 meses en estructura\n• Cortinas: 3 meses en instalación\n\nCoordinamos revisión o reposición en caso de defecto. 😊"},
-    {"keys": ["devolu","cambio","devolver","arrepent"],"resp": "🔄 *Cambios y Devoluciones:*\nTienes hasta *7 días* desde la entrega. Producto debe estar en estado original. Artículos personalizados no aplican."},
-    {"keys": ["tiempo","cuánto tarda","cuanto tarda","demora","llegará","cuando llega"],"resp": "⏱️ *Tiempos de entrega:*\n• La Vega: 1–2 días hábiles\n• Sto. Domingo/Santiago: 2–3 días\n• Resto del país: 3–5 días hábiles"},
+    {"keys": ["garantía","garantia","defecto","daño"],"resp": "🛡️ *Garantía:*\n• Electrodomésticos: 1–2 años según marca\n• Muebles: 6 meses en estructura\n• Cortinas: 3 meses en instalación"},
+    {"keys": ["devolu","cambio","devolver","arrepent"],"resp": "🔄 *Cambios y Devoluciones:*\nTienes hasta *7 días* desde la entrega. Producto en estado original. Artículos personalizados no aplican."},
+    {"keys": ["tiempo","cuánto tarda","cuanto tarda","demora","llegará","cuando llega"],"resp": "⏱️ *Tiempos de entrega:*\n• La Vega: 1–2 días\n• Sto. Domingo/Santiago: 2–3 días\n• Resto del país: 3–5 días hábiles"},
     {"keys": ["marcas","marca","fabricante"],"resp": "🏷️ *Marcas:*\n• Neveras/Lavadoras: Samsung, LG, Mabe, Whirlpool\n• Televisores: Samsung, LG, TCL, Hisense\n• Aires: LG, Carrier, Midea"},
     {"keys": ["instala","instalación","instalacion","arman","montan"],"resp": "🔧 *Instalación:*\nInstalamos aires, televisores, cortinas y aposentos. Costo según artículo y zona."},
     {"keys": ["pago","efectivo","tarjeta","transferencia","formas de pago"],"resp": "💰 *Formas de pago:*\n• Efectivo\n• Tarjeta crédito/débito\n• Transferencia bancaria\n• Pagos móviles\n• Financiamiento hasta *18 meses*"},
-    {"keys": ["usado","segunda","seminuevo"],"resp": "ℹ️ Solo manejamos *productos nuevos*, directamente del fabricante. ¡Calidad garantizada! 😊"},
-    {"keys": ["regalo","obsequio","empaque"],"resp": "🎁 ¡Sí! Hacemos *empaque especial para regalo* en artículos seleccionados. Indícalo en tu pedido."},
+    {"keys": ["usado","segunda","seminuevo"],"resp": "ℹ️ Solo manejamos *productos nuevos* directamente del fabricante. ¡Calidad garantizada! 😊"},
+    {"keys": ["regalo","obsequio","empaque"],"resp": "🎁 Hacemos *empaque especial para regalo* en artículos seleccionados. Indícalo en tu pedido."},
 ]
 
 def is_open():
     now = datetime.now()
     day = now.weekday()
-    h   = now.hour + now.minute / 60
+    h = now.hour + now.minute / 60
     if day == 6: return False
     if day <= 4: return 8 <= h < 19
     if day == 5: return 8 <= h < 18
@@ -88,12 +89,11 @@ def pick_rep():
 
 def rep_intro(rep, ctx=""):
     open_now = is_open()
-    ctx_line = f"\n📋 _Consulta: {ctx}_" if ctx else ""
-    off_line = "\n\n⚠️ Estamos fuera de horario (Lun–Vie 8AM–7PM · Sáb 8AM–6PM). Tu solicitud quedó registrada y te responderemos al abrir. 🙏" if not open_now else ""
-    return f"¡Hola! 👋 Mi nombre es *{rep['nombre']}*, soy *{rep['cargo']}* de *Mars Electromuebles S.R.L.*{ctx_line}\n\nEs un placer atenderte. Estoy aquí para ayudarte. 😊{off_line}"
+    ctx_line = f"\n📋 Consulta: {ctx}" if ctx else ""
+    off_line = "\n\n⚠️ Estamos fuera de horario. Tu solicitud quedó registrada y te responderemos al abrir. 🙏" if not open_now else ""
+    return f"¡Hola! 👋 Mi nombre es *{rep['nombre']}*, soy *{rep['cargo']}* de *Mars Electromuebles S.R.L.*{ctx_line}\n\nEs un placer atenderte. 😊{off_line}"
 
-MENU = "¿En qué puedo ayudarte?\n\n1 Ver productos\n2️⃣ Envíos\n3️⃣ Contacto y horario\n4️⃣ Financiamiento\n5️⃣ Asesoría de decoración\n6️⃣ Hablar con un representante\n7️⃣ Hacer un pedido\n\n_Escribe el número o tu pregunta_ 😊"
-
+MENU = "¿En qué puedo ayudarte?\n\n1️⃣ Ver productos\n2️⃣ Envíos\n3️⃣ Contacto y horario\n4️⃣ Financiamiento\n5️⃣ Asesoría de decoración\n6️⃣ Hablar con un representante\n7️⃣ Hacer un pedido\n\n_Escribe el número o tu pregunta_ 😊"
 PRODUCTS_MENU = "🏬 *Nuestros productos:*\n\n🛋️ Juegos de Sala\n🛏️ Juegos de Aposento\n📺 Electrodomésticos\n🪴 Adornos y Decoración\n🪟 Cortinas Personalizadas\n🎨 Asesoría de Decoración\n\n_Escríbenos qué artículo te interesa y un representante te atenderá._ 😊"
 
 def send(to, text):
@@ -106,7 +106,7 @@ def ai_reply(history, user_msg):
             "https://api.anthropic.com/v1/messages",
             headers={"x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json"},
             json={"model": "claude-sonnet-4-20250514", "max_tokens": 400,
-                  "system": "Eres el asistente virtual de Mars Electromuebles S.R.L., La Vega, República Dominicana. Vendemos muebles y electrodomésticos. NO des precios ni listas. Si preguntan por artículos diles que un representante les atenderá. Responde en español dominicano, amable, máximo 3 líneas.",
+                  "system": "Eres el asistente virtual de Mars Electromuebles S.R.L., La Vega, República Dominicana. Vendemos muebles y electrodomésticos. NO des precios ni listas de productos. Si preguntan por artículos diles que un representante les atenderá en breve. Responde en español dominicano, amable, máximo 3 líneas.",
                   "messages": (history[-6:] if len(history) > 6 else history) + [{"role": "user", "content": user_msg}]}
         )
         return r.json()["content"][0]["text"]
@@ -148,7 +148,7 @@ def process_message(phone, text):
         cat = detect_category(t)
         ctx = f"Oferta de {cat}" if cat else "Oferta de redes sociales"
         sess["pedido"]["cat"] = ctx
-        r("🏷️ *¡Bienvenido/a a nuestra promoción!* 🎉\n\nGracias por tu interés. Para confirmarte el precio especial y disponibilidad, en breve un representante te atenderá personalmente. ⏳")
+        r("🏷️ *¡Bienvenido/a a nuestra promoción!* 🎉\n\nGracias por tu interés. Para confirmarte el precio especial y disponibilidad, en breve un representante te atenderá. ⏳")
         r(rep_intro(pick_rep(), ctx)); return replies
 
     faq = match_faq(t)
@@ -162,15 +162,15 @@ def process_message(phone, text):
         nombres = {"sala":"Juegos de Sala","aposento":"Juegos de Aposento","nevera":"Neveras / Refrigeradores","lavadora":"Lavadoras","estufa":"Estufas / Cocinas","aire":"Aires Acondicionados","televisor":"Televisores Smart TV","electrodomestico":"Electrodomésticos","adorno":"Adornos y Decoración","cortina":"Cortinas Personalizadas","decoracion":"Asesoría de Decoración"}
         nombre_cat = nombres.get(cat, "ese artículo")
         sess["pedido"]["cat"] = nombre_cat
-        r(f"¡Excelente elección! 😊\n\nTenemos disponibilidad en *{nombre_cat}*.\n\n⏳ *Un momento, por favor...* En breve uno de nuestros representantes te atenderá y te enviará imágenes de los artículos disponibles. 📸")
+        r(f"¡Excelente elección! 😊\n\nTenemos disponibilidad en *{nombre_cat}*.\n\n⏳ Un momento... En breve uno de nuestros representantes te atenderá y te enviará imágenes de los artículos disponibles. 📸")
         r(rep_intro(pick_rep(), nombre_cat)); return replies
 
     if any(k in t for k in ["asesor","decorar","diseño","diseno","transformar"]):
         sess["pedido"]["cat"] = "Asesoría de Decoración"
-        r("🎨 *Asesoría Personalizada de Decoración*\n\nNuestro equipo te ayuda a transformar tu espacio con visita al hogar, paleta de colores, selección de muebles y plan de distribución.\n\n✨ *Primera consulta sin costo* para clientes que compren en Mars Electromuebles.\n\n⏳ En breve un representante te contactará. 😊")
+        r("🎨 *Asesoría Personalizada de Decoración*\n\nNuestro equipo te ayuda con visita al hogar, paleta de colores, selección de muebles y plan de distribución.\n\n✨ *Primera consulta sin costo* para clientes que compren en Mars Electromuebles.\n\n⏳ En breve un representante te contactará. 😊")
         r(rep_intro(pick_rep(), "Asesoría de Decoración")); return replies
 
-    if any(k in t for k in ["representante","hablar con","hablar a","agente","vendedor","ejecutiva","persona"]):
+    if any(k in t for k in ["representante","hablar con","agente","vendedor","ejecutiva","persona"]):
         staff_list = "\n".join([f"• *{s['nombre']}* – {s['cargo']}" for s in STAFF])
         r(f"Con gusto te conecto:\n\n{staff_list}\n\nEscribe el nombre o *cualquiera* para asignarte uno disponible. 😊"); return replies
 
@@ -178,15 +178,15 @@ def process_message(phone, text):
         if s["nombre"].lower().split()[0] in t or s["nombre"].lower() in t:
             r(f"⏳ Conectándote con *{s['nombre']}*..."); r(rep_intro(s, sess["pedido"].get("cat",""))); return replies
     if "cualquiera" in t:
-        rep = pick_rep(); r(f"⏳ Conectándote con *{rep['nombre']}*..."); r(rep_intro(rep, sess["pedido"].get("cat",""))); return replies
+        rep = pick_rep(); r(f"⏳ Conectándote con *{rep['nombre']}*..."); r(rep_intro(rep, "")); return replies
 
-    if any(k in t for k in ["envío","envio","entrega","despacho","enviar","domicilio","mandar","llevan"]):
+    if any(k in t for k in ["envío","envio","entrega","despacho","enviar","domicilio","mandar"]):
         r(f"🚚 *Envíos a Todo el País*\n\n{INFO['envios']}\n\n📍 *Nuestra tienda:*\n{INFO['direccion']}"); return replies
 
-    if any(k in t for k in ["financ","cuotas","crédito","credito","meses","mensual"]):
+    if any(k in t for k in ["financ","cuotas","crédito","credito","meses"]):
         r(f"💳 *Financiamiento hasta 18 Meses*\n\n{INFO['financiamiento']}\n\nEscribe *representante* para cotizar tu cuota. 😊"); return replies
 
-    if any(k in t for k in ["contact","horario","dirección","direccion","dónde","donde","ubicación","abierto","abren","teléfono","telefono"]):
+    if any(k in t for k in ["contact","horario","dirección","direccion","dónde","donde","ubicación","abierto","abren","teléfono"]):
         open_now = is_open()
         status = "🟢 *¡Estamos abiertos ahora mismo!*" if open_now else "🔴 *Cerrados.* Te atendemos al reabrir. 😊"
         r(f"📍 *Mars Electromuebles S.R.L.*\n{INFO['direccion']}\n\n⏰ *Horario:*\n{INFO['horario']}\n\n{status}"); return replies
@@ -199,7 +199,7 @@ def process_message(phone, text):
         r("¡Con mucho gusto! 😊 En *Mars Electromuebles* siempre es un placer atenderte. ¡Excelente día! ✨"); return replies
 
     if any(k in t for k in ["queja","problema","reclamo","molest","inconveniente"]):
-        r("😔 Lamentamos tu experiencia. La satisfacción de nuestros clientes es nuestra prioridad.\n\nTe conecto de inmediato con un representante. 🤝")
+        r("😔 Lamentamos tu experiencia. Te conecto de inmediato con un representante. 🤝")
         r(rep_intro(pick_rep(), "Queja / inconveniente")); return replies
 
     sess["history"].append({"role": "user", "content": text})
@@ -226,7 +226,7 @@ def webhook():
                 for msg in messages:
                     if msg.get("type") == "text":
                         phone = msg["from"]
-                        text  = msg["text"]["body"]
+                        text = msg["text"]["body"]
                         for reply in process_message(phone, text):
                             send(phone, reply)
     except Exception as e:
@@ -235,8 +235,7 @@ def webhook():
 
 @app.route("/", methods=["GET"])
 def home():
-    return "🛋️ Mars Electromuebles Bot – Activo ✅", 200
+    return "Mars Electromuebles Bot - Activo", 200
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=PORT, debug=False)
